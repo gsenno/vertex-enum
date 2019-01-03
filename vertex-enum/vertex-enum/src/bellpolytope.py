@@ -5,11 +5,12 @@ Created on 27 dic. 2018
 '''
 import numpy as np
 import cdd as cdd
-from itertools import product, permutations, combinations, combinations_with_replacement
+from itertools import product
 
 class BellPolytope:
-    K = 0
+    parties = 2
     N = 0
+    K = 0
     vertices = []
     inequalities = []
     
@@ -19,7 +20,7 @@ class BellPolytope:
     
     def getVertices(self):  # @DontTrace
         if self.vertices==[]:
-            self.vertices=self.__generateVertices(self.K,self.N)
+            self.vertices=self.__generateVertices(self.parties,self.N,self.K)
         return self.vertices
     
     def numberOfVertices(self):
@@ -31,7 +32,7 @@ class BellPolytope:
         return self.inequalities
     
     def getInefficiencyResistantInequalities(self):
-        origen = np.zeros((self.K*self.N)**2)
+        origen = np.zeros((self.K*self.N)**self.parties)
         verticesLocalIncomplete = list(self.getVertices())+[origen];
     
         inequalities = self.__generateInequalities(verticesLocalIncomplete)
@@ -42,15 +43,15 @@ class BellPolytope:
         
         return ineffResistInequalities
     
-    def __generateVertices(self,K,N):
-        D=np.zeros((K**N,N), dtype=int)
-        for _ in range(K**N):
-            D[_][:]=np.array(np.unravel_index(_,(K,)*N))
-        vertices=np.zeros(((K**(N*2),)+(N,)*2+(K,)*2))
+    def __generateVertices(self,parties,inputsPerParty,outputsPerParty):
+        D=np.zeros((outputsPerParty**inputsPerParty,inputsPerParty), dtype=int)
+        for _ in range(outputsPerParty**inputsPerParty):
+            D[_][:]=np.array(np.unravel_index(_,(outputsPerParty,)*inputsPerParty))
+        vertices=np.zeros(((outputsPerParty**(inputsPerParty*parties),)+(inputsPerParty,)*parties+(outputsPerParty,)*parties))
         c=0
-        for _ in product(range(K**N), repeat=2):
-            for x in product(range(N), repeat=2):
-                vertices[(c,)+x+tuple([D[_[i]][x[i]] for i in range(2)])]=1
+        for _ in product(range(outputsPerParty**inputsPerParty), repeat=parties):
+            for x in product(range(inputsPerParty), repeat=parties):
+                vertices[(c,)+x+tuple([D[_[i]][x[i]] for i in range(parties)])]=1
             c+=1
         shape=np.prod(np.delete(vertices.shape[:],0,0))
         return vertices.reshape(vertices.shape[0],shape)
@@ -78,12 +79,12 @@ class BellPolytope:
     
     def __extendInequalityToDetecLoopholeSetting(self,inequality):
         functional=inequality[1:]
-        inputs=self.N**2
-        outputs=self.K**2
+        inputs=self.N**self.parties
+        outputs=self.K**self.parties
         ineffResistInequality = inequality[0:1]
         for nInputPair in range(inputs):
             oldCoeffForInputs=functional[nInputPair*outputs:(nInputPair+1)*outputs]
-            newCoeffForInputs=np.zeros((self.K+1)**2)
+            newCoeffForInputs=np.zeros((self.K+1)**self.parties)
             for nOutput in range(self.K):
                 newCoeffForInputs[(self.K+1)*nOutput:(self.K+1)*nOutput+self.K] = oldCoeffForInputs[nOutput*self.K:nOutput*self.K+self.K] 
             ineffResistInequality.extend(newCoeffForInputs)
@@ -91,7 +92,7 @@ class BellPolytope:
         return ineffResistInequality
     
     def __makeIneqBoundedOnAbortDist(self,ineq):
-        abortingDists = self.__generateVertices(self.K+1, self.N)
+        abortingDists = self.__generateVertices(self.parties,self.N,self.K+1)
         bound = max(map(lambda vector : np.dot(ineq[1:],vector),abortingDists))
         ineffResistIneq = np.concatenate(([0],np.array(ineq[1:]))) if bound==0 else np.concatenate(([1],(1/bound)*np.array(ineq[1:]))) 
         return ineffResistIneq
