@@ -1,13 +1,0 @@
-'''
-Created on 23 Oct 2018
-
-@author: gsenno
-'''
-
-from semidefinite import *
-from problem import *
-import numpy as np
-import picos as sdp
-import cvxopt as cvx
-
-if __name__ == '__main__':    prob = QuantumBilinearProblem()    rho=np.matrix([[0,0,0,0],[0,1/2,-1/2,0],[0,-1/2,1/2,0],[0,0,0,0]])    J=[[-rho,rho,-rho,rho],[rho,-rho,rho,-rho],[-rho,rho,rho,-rho],[rho,-rho,-rho,rho]]    prob.init_matrix_form([[2,2,2,2],[2,2,2,2]],J);    prob.add_constraint(prob.varX()[0]+prob.varX()[4] == 2./np.sqrt(2))    prob.add_constraint(prob.varX()[1]+prob.varX()[5] == 0.)    prob.add_constraint(prob.varX()[2]+prob.varX()[6] == 0.)    prob.add_constraint(prob.varX()[3]+prob.varX()[7] == 0.)        prob.add_constraint(prob.varX()[8]+prob.varX()[12] == 2./np.sqrt(2))    prob.add_constraint(prob.varX()[9]+prob.varX()[13] == 0)    prob.add_constraint(prob.varX()[10]+prob.varX()[14] == 0.)    prob.add_constraint(prob.varX()[11]+prob.varX()[15] == 0.)          prob.add_constraint(prob.varY()[0]+prob.varY()[4] == 2./np.sqrt(2))    prob.add_constraint(prob.varY()[1]+prob.varY()[5] == 0.)    prob.add_constraint(prob.varY()[2]+prob.varY()[6] == 0.)    prob.add_constraint(prob.varY()[3]+prob.varY()[7] == 0.)         prob.add_constraint(prob.varY()[8]+prob.varY()[12] == 2./np.sqrt(2))    prob.add_constraint(prob.varY()[9]+prob.varY()[13] == 0.)    prob.add_constraint(prob.varY()[10]+prob.varY()[14] == 0.)    prob.add_constraint(prob.varY()[11]+prob.varY()[15] == 0.)        prob.add_constraint(prob.matvarX(0) >> 0.*np.identity(2))    prob.add_constraint(prob.matvarX(1) >> 0.*np.identity(2))     prob.add_constraint(prob.matvarX(2) >> 0.*np.identity(2))    prob.add_constraint(prob.matvarX(3) >> 0.*np.identity(2))    prob.add_constraint(prob.matvarY(3) >> 0.*np.identity(2))    prob.add_constraint(prob.matvarY(2) >> 0.*np.identity(2))    prob.add_constraint(prob.matvarY(1) >> 0.*np.identity(2))    prob.add_constraint(prob.matvarY(0) >> 0.*np.identity(2))      prob.solve(verb = 1, maxiter = STD_MAXITER, allowedgap = STD_ALLOWEDGAP)    print('X0 = ', prob.matsolX(0))    print('X1 = ', prob.matsolX(1))    print('X0+X1 = ',prob.matsolX(0)+prob.matsolX(1))    print('-------------------------------------------------------------');    print('X2 = ', prob.matsolX(2))    print('X3 = ', prob.matsolX(3))    print('X2+X3 = ',prob.matsolX(2)+prob.matsolX(3))    print('-------------------------------------------------------------');    print('Y0 = ', prob.matsolX(0))    print('Y1 = ', prob.matsolX(1))    print('Y0+Y1 = ',prob.matsolY(0)+prob.matsolY(1))    #print('P = ', prob.matsolY(0))    
