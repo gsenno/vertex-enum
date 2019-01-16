@@ -87,7 +87,7 @@ class BellPolytope:
             newCoeffForInputs=np.zeros((self.K+1)**self.parties)
             for nOutput in range(self.K):
                 newCoeffForInputs[(self.K+1)*nOutput:(self.K+1)*nOutput+self.K] = oldCoeffForInputs[nOutput*self.K:nOutput*self.K+self.K] 
-            ineffResistInequality.extend(newCoeffForInputs)
+            ineffResistInequality=np.append(ineffResistInequality,newCoeffForInputs)
         
         return ineffResistInequality
     
