@@ -52,13 +52,13 @@ if __name__ == '__main__':
     prob=pic.Problem() 
      
     A={}
-    for x1,x2 in product(range(n),repeat=2):
+    for x1,x2 in product(range(n),range(2)):
         for a1,a2 in product(range(2),repeat=2):
             A[x1,x2,a1,a2]=prob.add_variable('A_{0}{1}{2}{3}'.format(x1,x2,a1,a2),
                                              (2,2),'hermitian')
             prob.add_constraint(A[x1,x2,a1,a2]>>0)
      
-    for x1,x2 in product(range(n),repeat=2):
+    for x1,x2 in product(range(n),range(2)):
         prob.add_constraint(sum(A[x1,x2,a1,a2] for a1 in range(2) 
                                                for a2 in range(2))==np.eye(2))
     
@@ -71,21 +71,21 @@ if __name__ == '__main__':
      
      
     B={}
-    for i in range(0,n):
+    for i in range(n):
         for j in (0,1):
             B[i,j]=pic.new_param('B_'+str(i)+str(j),bobsProjectors[i][j])
      
     rho=pic.new_param('rho',np.outer([1,0,0,1],[1,0,0,1])/2)
      
      
-    A1=[1/n*sum(A[x1,x2,a1,a2]*(-1)**a1 for a1 in range(2) 
+    A1=[1/2*sum(A[x1,x2,a1,a2]*(-1)**a1 for a1 in range(2) 
                                         for a2 in range(2) 
-                                        for x2 in range(n))
+                                        for x2 in range(2))
                                                     for x1 in range(n)]
      
-    A2=[1/2*sum(A[x1,x2,a1,a2]*(-1)**a2 for a1 in range(2) 
+    A2=[1/n*sum(A[x1,x2,a1,a2]*(-1)**a2 for a1 in range(2) 
                                         for a2 in range(2) 
-                                        for x1 in range(2))
+                                        for x1 in range(n))
                                                     for x2 in range(2)]
          
     B1=[sum(B[y,b]*(-1)**b for b in range(2)) for y in range(n)]
