@@ -5,94 +5,48 @@ Created on 27 dic. 2018
 '''
 import numpy as np
 import cdd as cdd
-from itertools import product
+from itertools import product,filterfalse
+from _functools import reduce
+from ncpol2sdpa.sdp_relaxation import imap
 
 class BellPolytope:
-    parties = 2
-    N = 0
-    K = 0
-    vertices = []
-    inequalities = []
     
-    def __init__(self,inputsPerParty,outputsPerParty):
-        self.K = outputsPerParty
-        self.N = inputsPerParty
+    outputsAlice = []
+    outputsBob = []
     
-    def getVertices(self):  # @DontTrace
-        if self.vertices==[]:
-            self.vertices=self.__generateVertices(self.parties,self.N,self.K)
-        return self.vertices
-    
-    def numberOfVertices(self):
-        return len(self.getVertices())
-    
-    def getInequalities(self):  # @DontTrace
-        if self.inequalities==[]:
-            self.inequalities=self.__generateInequalities(self.getVertices())
-        return self.inequalities
-    
-    def getInefficiencyResistantInequalities(self):
-        origen = np.zeros((self.K*self.N)**self.parties)
-        verticesLocalIncomplete = list(self.getVertices())+[origen];
-    
-        inequalities = self.__generateInequalities(verticesLocalIncomplete)
-    
-        unNormalizedIneffResistIneq = map(lambda ineq: self.__extendInequalityToDetecLoopholeSetting(ineq),inequalities);
-    
-        ineffResistInequalities = map(lambda ineq: self.__makeIneqBoundedOnAbortDist(ineq),unNormalizedIneffResistIneq)
+    # outputsAlice is a list of integers such that outputsAlice[i]==#outputs for Alice's input i (idem outputsBob).
+    # the lists do not need to be of the same length.
+    def __init__(self,outputsAlice,outputsBob):
+        self.outputsAlice = outputsAlice
+        self.outputsBob = outputsBob
         
-        return ineffResistInequalities
+    def _numberOfInputsAlice(self):
+        return len(self.outputsAlice)
     
-    def __generateVertices(self,parties,inputsPerParty,outputsPerParty):
-        D=np.zeros((outputsPerParty**inputsPerParty,inputsPerParty), dtype=int)
-        for _ in range(outputsPerParty**inputsPerParty):
-            D[_][:]=np.array(np.unravel_index(_,(outputsPerParty,)*inputsPerParty))
-        vertices=np.zeros(((outputsPerParty**(inputsPerParty*parties),)+(inputsPerParty,)*parties+(outputsPerParty,)*parties))
-        c=0
-        for _ in product(range(outputsPerParty**inputsPerParty), repeat=parties):
-            for x in product(range(inputsPerParty), repeat=parties):
-                vertices[(c,)+x+tuple([D[_[i]][x[i]] for i in range(parties)])]=1
-            c+=1
-        shape=np.prod(np.delete(vertices.shape[:],0,0))
-        return vertices.reshape(vertices.shape[0],shape)
+    def _numberOfInputsBob(self):
+        return len(self.outputsBob)
     
-    def __generateInequalities(self,vertices):
-        cddPolytope = self.__generateCddPolytope(vertices)
-        ext = cddPolytope.get_inequalities()
-        inequalities = map(lambda x:list(x), list(ext.__getitem__(slice(ext.row_size))))
-        return inequalities
+    def _strategiesGenerator(self,outputs):
+        yield from product(*[range(0,numberOfOutputs) for numberOfOutputs in outputs])
     
-    def __generateCddPolytope(self,vertices):
-        vRep = self.__buildVRepresentation(vertices)
-        mat = cdd.Matrix(vRep, number_type='fraction')
-        mat.rep_type = cdd.RepType.GENERATOR
-        poly = cdd.Polyhedron(mat)
-        return poly
+    def _strategyToDistribution(self,stgAlice, stgBob):
+        distribution = []
+        for x in range (0,len(self.outputsAlice)):
+            for y in range (0,len(self.outputsBob)):
+                for a in range (0,self.outputsAlice[x]):
+                    for b in range (0,self.outputsBob[y]):
+                        if (a==stgAlice[x])&(b==stgBob[y]):
+                            distribution.append(1)
+                        else:
+                            distribution.append(0)
+        return distribution
     
-    def __buildVRepresentation(self,vertices):
-        vRep = np.zeros((len(vertices), 1+len(vertices[0])))
-        for i in range(len(vertices)):
-            vRep[i][0] = 1
-            vRep[i][1:] = vertices[i]
-        
-        return vRep
+    def getGeneratorForVertices(self):
+        return (self._strategyToDistribution(stgAlice, stgBob)
+                 for stgAlice in self._strategiesGenerator(self.outputsAlice)
+                 for stgBob in self._strategiesGenerator(self.outputsBob)) 
     
-    def __extendInequalityToDetecLoopholeSetting(self,inequality):
-        functional=inequality[1:]
-        inputs=self.N**self.parties
-        outputs=self.K**self.parties
-        ineffResistInequality = inequality[0:1]
-        for nInputPair in range(inputs):
-            oldCoeffForInputs=functional[nInputPair*outputs:(nInputPair+1)*outputs]
-            newCoeffForInputs=np.zeros((self.K+1)**self.parties)
-            for nOutput in range(self.K):
-                newCoeffForInputs[(self.K+1)*nOutput:(self.K+1)*nOutput+self.K] = oldCoeffForInputs[nOutput*self.K:nOutput*self.K+self.K] 
-            ineffResistInequality=np.append(ineffResistInequality,newCoeffForInputs)
-        
-        return ineffResistInequality
+    def getListOfVertices(self):
+        return list(self.getGeneratorForVertices())
     
-    def __makeIneqBoundedOnAbortDist(self,ineq):
-        abortingDists = self.__generateVertices(self.parties,self.N,self.K+1)
-        bound = max(map(lambda vector : np.dot(ineq[1:],vector),abortingDists))
-        ineffResistIneq = np.concatenate(([0],np.array(ineq[1:]))) if bound==0 else np.concatenate(([1],(1/bound)*np.array(ineq[1:]))) 
-        return ineffResistIneq
+    
