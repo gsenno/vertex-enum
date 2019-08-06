@@ -126,3 +126,4 @@ if __name__ == '__main__':
         # Get the solution values
         print(M.getProblemStatus(SolutionType.Basic))
         print(bellFunctional.level())
+        print(localBound.level())
