@@ -64,16 +64,16 @@ if __name__ == '__main__':
     
     phi = lambda i : (i-1)*np.pi/n
     phiprime= lambda i : (2*i-1)*np.pi/(2*n) 
-    bobsProjectors=[projectorsForQubitObservable
+    bobEffects=[projectorsForQubitObservable
                     (createQubitObservable([np.sin(phiprime(i)),0,np.cos(phiprime(i))]))
                      for i in range(1,n+1)]
-    bobsProjectors=[list(map(lambda qutipProj : qutipProj.get_data().toarray(),obs)) for obs in bobsProjectors]
+    bobEffects=[list(map(lambda qutipProj : qutipProj.get_data().toarray(),obs)) for obs in bobEffects]
      
      
     B={}
     for i in range(n):
         for j in (0,1):
-            B[i,j]=pic.new_param('B_'+str(i)+str(j),bobsProjectors[i][j])
+            B[i,j]=pic.new_param('B_'+str(i)+str(j),bobEffects[i][j])
      
     rho=pic.new_param('rho',np.outer([1,0,0,1],[1,0,0,1])/2)
      
@@ -126,5 +126,6 @@ if __name__ == '__main__':
 
         # Get the solution values
         print(M.getProblemStatus(SolutionType.Basic))
+        print(M.primalObjValue())
         print(bellFunctional.level())
         print(localBound.level())
