@@ -42,7 +42,9 @@ if __name__ == '__main__':
     n=3
     outputsAlice = [4,4,4,4,4,4]
     outputsBob = [2 for _ in range(0,n)]
-               
+    
+#vertices=generateVertices1bitOfCommLocalPol(outputsAlice,outputsBob) 
+           
     alpha=5.1
      
     "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
@@ -103,22 +105,24 @@ if __name__ == '__main__':
     
     with Model("lo1") as M:
 
-        # Create variable 'x' of length 4
-        x = M.variable("x", len(vertices), Domain.greaterThan(0.0))
-        
+        # Create variables
+        bellFunctional = M.variable("func")
+        localBound = M.variable("bound", 1)
 
         # Create constraints
-        for prob in range(len(vertices[0])):
-            M.constraint('p('+str(prob)+')',Expr.dot(x,list(map(lambda ver : ver[prob],vertices))),Domain.equalsTo(dist[prob]))
+        vertexNum=0
+        for vertex in vertices:
+            M.constraint('const'+str(vertexNum),Expr.dot(bellFunctional,vertex)-localBound
+                         ,Domain.lessThan(0))
             
-        M.constraint('norm',Expr.dot(x,np.ones((len(vertices), 1))),Domain.equalsTo(1))
-        
+        M.constraint('norm',Expr.dot(bellFunctional,dist)-localBound,Domain.lessThan(1))
         
         # Set the objective function to (c^t * x)
-        M.objective("obj", ObjectiveSense.Maximize, 1)
+        M.objective("obj", ObjectiveSense.Maximize, Expr.dot(bellFunctional,dist)-localBound)
 
         # Solve the problem
         M.solve()
 
         # Get the solution values
         print(M.getProblemStatus(SolutionType.Basic))
+        print(bellFunctional.level())

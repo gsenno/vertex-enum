@@ -11,21 +11,21 @@ from _functools import reduce
 from ncpol2sdpa.sdp_relaxation import imap
 import qutip as qt
 
-def getFirstAliceMarginal(n,dist):
+def getFirstAliceMarginal(nA1,nA2,nB,dist):
     pAlice1 = []
-    for x1,y in it.product(range(n),repeat=2):
+    for x1,y in it.product(range(nA1),range(nB)):
         for a1,b in it.product(range(2),repeat=2):
-            pAlice1.append(sum([1/n*dist[(b+2*a1+4*a2)+8*(y+n*x2+(n**2)*x1)]
-                for x2 in range(n)
+            pAlice1.append(sum([1/nA2*dist[(b+2*a1+4*a2)+8*(y+nA2*x2+(nA1**2)*x1)]
+                for x2 in range(nA2)
                 for a2 in range(2)]))
     return pAlice1
 
-def getSecondAliceMarginal(n,dist):
+def getSecondAliceMarginal(nA1,nA2,nB,dist):
     pAlice2 = []
-    for x2,y in it.product(range(n),repeat=2):
+    for x2,y in it.product(range(nA2),range(nB)):
         for a2,b in it.product(range(2),repeat=2):
-            pAlice2.append(sum([1/n*dist[(b+2*a1+4*a2)+8*(y+n*x2+(n**2)*x1)]
-                    for x1 in range(n)
+            pAlice2.append(sum([1/nA1*dist[(b+2*a1+4*a2)+8*(y+nA2*x2+(nA1**2)*x1)]
+                    for x1 in range(nA1)
                     for a1 in range(2)]))
     return pAlice2
 
