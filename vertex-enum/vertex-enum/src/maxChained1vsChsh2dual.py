@@ -112,13 +112,14 @@ if __name__ == '__main__':
         # Create constraints
         vertexNum=0
         for vertex in vertices:
-            M.constraint('const'+str(vertexNum),Expr.dot(bellFunctional,vertex)-localBound
+            M.constraint('const'+str(vertexNum),Expr.sub(Expr.dot(bellFunctional,vertex),localBound)
                          ,Domain.lessThan(0))
+            vertexNum+=1
             
-        M.constraint('norm',Expr.dot(bellFunctional,dist)-localBound,Domain.lessThan(1))
+        M.constraint('norm',Expr.sub(Expr.dot(bellFunctional,dist),localBound),Domain.lessThan(1))
         
         # Set the objective function to (c^t * x)
-        M.objective("obj", ObjectiveSense.Maximize, Expr.dot(bellFunctional,dist)-localBound)
+        M.objective("obj", ObjectiveSense.Maximize, Expr.sub(Expr.dot(bellFunctional,dist),localBound))
 
         # Solve the problem
         M.solve()
