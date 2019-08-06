@@ -101,12 +101,12 @@ if __name__ == '__main__':
     dist=[pic.trace(pic.kron(A[x1,x2,a1,a2],B[y,b])*rho).get_value().real
           for x1,x2,y,a1,a2,b in product(range(n),range(2),range(n),range(2),range(2),range(2))]
  
-    vertices=BellPolytopeWithOneWayCommunication(outputsAlice,outputsBob).getListOfVertices()
+    vertices=BellPolytopeWithOneWayCommunication(outputsAlice,outputsBob).getGeneratorForVertices()
     
     with Model("lo1") as M:
 
         # Create variables
-        bellFunctional = M.variable("func")
+        bellFunctional = M.variable("func",144)
         localBound = M.variable("bound", 1)
 
         # Create constraints
