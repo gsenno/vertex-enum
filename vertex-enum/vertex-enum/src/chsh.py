@@ -14,6 +14,40 @@ from _functools import reduce
 from ncpol2sdpa.sdp_relaxation import imap
 from linopttools import *
 import qutip as qt
+import picos as pic
+
+def In_ConvexHull(vertices,q):
+    # Tests if the point q is inside the convex Hull of the points D
+    # q should be a np multidim array
+    # D should be any np multidim array with first index labelling the points of convex set
+    # output is list containing the solver status and the solution 
+    #reshape so we have vectors
+    
+    N=len(vertices)
+    D=pic.new_param('D',vertices)
+    #define problem
+    prob=pic.Problem()
+    #cerate prob vector
+    p=prob.add_variable('p',N)
+    #add desired point
+    q=np.reshape(q,[1,-1])
+    q=pic.new_param('q',q)
+    #feasibilitiy test
+    prob.set_objective('max',0*p[0])
+    
+    #constraints: positivity, normalisation, correct vector
+    prob.add_constraint(p>=0)
+    prob.add_constraint([[1 for __ in range(N)]]*p==1)
+#    prob.add_constraint(pic.sum([p[i] for i in range(N)])==1.0)
+    prob.add_constraint(p.T*D==q)
+
+    prob.solve(verbose=1)
+#    print(prob)
+    
+    #get optimal variables and reshape
+    pvalues=np.array(p.value)
+    
+    return [prob.status, pvalues]
 
 if __name__ == '__main__':
     
@@ -33,8 +67,8 @@ if __name__ == '__main__':
     dist=computeDistributionFromStateAndEffects(psi,aliceEffects,bobEffects)
  
     vertices=BellPolytope(outputsAlice,outputsBob).getListOfVertices()
-    
-    ConvexHull(vertices).
+     
+    print(In_ConvexHull(vertices, vertices[0]))
 #     
 #     with Model("lo1") as M:
 #         M.setSolverParam('logInfeasAna',100)

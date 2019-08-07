@@ -134,7 +134,7 @@ if __name__ == '__main__':
  
     vertices=BellPolytopeWithOneWayCommunication(outputsAlice,outputsBob).getListOfVertices()
     
-    print(CriticalDistance(np.array(vertices), np.array(dist)))
+    print(In_ConvexHull(np.array(vertices), np.array(dist)))
 
 #    
 
