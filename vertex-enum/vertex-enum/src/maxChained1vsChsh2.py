@@ -37,6 +37,55 @@ def chainedBellValue(n,p):
         result+=(-1)**(a+b)*(p[(b+2*a)+4*(n-1+n*(n-1))]-p[(b+2*a)+4*(n-1+n*(0))])
     return result
 
+def CriticalDistance(D,q):
+    #reshape so we have vectors
+    Dshape=D.shape
+    D=np.reshape(D,[D.shape[0],-1])
+    N=D.shape[0]
+    M=D.shape[1]
+    D=pic.new_param('D',D)
+#    D2={}
+#    for i in range(N):
+#        D2[i]=pic.new_param('D[{0}]'.format(i),D[i].tolist())
+    #define problem
+    prob=pic.Problem()
+    #cerate prob vector
+    p=prob.add_variable('p',N)
+    #add desired point
+    q=np.reshape(q,[1,-1])
+    q=pic.new_param('q',q.tolist())
+    #noise variable to maximise
+    alpha=prob.add_variable('alpha',1)
+    #noise point: some point inside of the local polytope
+    p_inside=prob.add_variable('p_inside',N)
+    p0=p_inside.T*D
+#    p0=pic.sum([D[i,:]*p_inside[i] for i in range(N)],'i')
+    prob.add_constraint(p_inside>=0)
+    prob.add_constraint((1|p_inside)==alpha)
+    
+    #constraints: positivity, normalisation, correct vector
+    prob.add_constraint(p>=0)
+    prob.add_constraint((1|p)==1)
+    prob.add_constraint(p.T*D==(1-alpha)*q+p0)
+#    prob.add_constraint(pic.sum([D[i,:]*p[i] for i in range(N)],'i')==(1-alpha)*q+p0)
+         
+    #feasibilitiy test
+    prob.set_objective('min',alpha)
+        
+    #solve problem
+#    print(prob)
+    prob.solve(verbose=0)
+
+    #extract relevant dual variables and reshape to original array dimensions
+    dual_ineq=np.array(prob.constraints[-1].dual)
+    dual_ineq=np.reshape(dual_ineq,Dshape[1:5])
+    
+    ##get optimal primal variables
+    pvalues=np.array(p.value)
+    
+    return [prob.status, prob.obj_value(), pvalues, dual_ineq]
+
+
 if __name__ == '__main__':
     
     n=3
@@ -101,25 +150,29 @@ if __name__ == '__main__':
  
     vertices=BellPolytopeWithOneWayCommunication(outputsAlice,outputsBob).getListOfVertices()
     
-    with Model("lo1") as M:
+    print(CriticalDistance(np.array(vertices), np.array(dist)))
 
-        # Create variable 'x' of length 4
-        x = M.variable("x", len(vertices), Domain.greaterThan(0.0))
-        
+#    
 
-        # Create constraints
-        for prob in range(len(vertices[0])):
-            M.constraint('p('+str(prob)+')',Expr.dot(x,list(map(lambda ver : ver[prob],vertices))),Domain.equalsTo(dist[prob]))
-            
-        M.constraint('norm',Expr.dot(x,np.ones((len(vertices), 1))),Domain.equalsTo(1))
-        
-        
-        # Set the objective function to (c^t * x)
-        M.objective("obj", ObjectiveSense.Maximize, 1)
-
-        # Solve the problem
-        M.solve()
-
-        # Get the solution values
-        print(M.getProblemStatus(SolutionType.Basic))
-        print(x.dual)
+#     with Model("lo1") as M:
+# 
+#         # Create variable 'x' of length 4
+#         x = M.variable("x", len(vertices), Domain.greaterThan(0.0))
+#         
+# 
+#         # Create constraints
+#         for prob in range(len(vertices[0])):
+#             M.constraint('p('+str(prob)+')',Expr.dot(x,list(map(lambda ver : ver[prob],vertices))),Domain.equalsTo(dist[prob]))
+#             
+#         M.constraint('norm',Expr.dot(x,np.ones((len(vertices), 1))),Domain.equalsTo(1))
+#         
+#         
+#         # Set the objective function to (c^t * x)
+#         M.objective("obj", ObjectiveSense.Maximize, 1)
+# 
+#         # Solve the problem
+#         M.solve()
+# 
+#         # Get the solution values
+#         print(M.getProblemStatus(SolutionType.Basic))
+#         print(x.dual)
