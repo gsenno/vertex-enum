@@ -37,15 +37,15 @@ def chainedBellValue(n,p):
         result+=(-1)**(a+b)*(p[(b+2*a)+4*(n-1+n*(n-1))]-p[(b+2*a)+4*(n-1+n*(0))])
     return result
 
-def In_ConvexHull(D,q):
+def In_ConvexHull(vertices,q):
     # Tests if the point q is inside the convex Hull of the points D
     # q should be a np multidim array
     # D should be any np multidim array with first index labelling the points of convex set
     # output is list containing the solver status and the solution 
     #reshape so we have vectors
-    D=np.reshape(D,[D.shape[0],-1])
-    N=D.shape[0]
-    D=pic.new_param('D',D)
+    
+    N=len(vertices)
+    D=pic.new_param('D',vertices)
     #define problem
     prob=pic.Problem()
     #cerate prob vector
@@ -134,7 +134,7 @@ if __name__ == '__main__':
  
     vertices=BellPolytopeWithOneWayCommunication(outputsAlice,outputsBob).getListOfVertices()
     
-    print(In_ConvexHull(np.array(vertices), np.array(dist)))
+    print(In_ConvexHull(vertices, vertices[0]))
 
 #    
 
